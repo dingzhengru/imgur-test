@@ -14,13 +14,15 @@
   </head>
   <body>
     <input type="file" onchange="onFileChange(event)" />
-    <div id="filename"></div>
+    <button onclick="submit()">送出</button>
+    <div id="imgur"></div>
     <img src="" alt="" />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.1/axios.min.js"></script>
     <script>
       const clientID = '24e8cb89e8275b5';
       let imgBase64 = '';
+      let imgFilename = '';
       let imgurLink = '';
       let imgurDeleteHash = '';
       async function imageUpload(data) {
@@ -63,7 +65,6 @@
       }
 
       async function onFileChange(event) {
-        console.log('onFileChange', event);
         const files = event.target.files || event.dataTransfer.files;
         if (!files.length || files.length <= 0) {
           return;
@@ -74,23 +75,25 @@
         const reader = new FileReader();
         reader.onload = async e => {
           imgBase64 = e.target.result;
-          console.log(imgBase64);
-          document.querySelector('#filename').innerHTML = imgFilename;
           document.querySelector('img').src = e.target.result;
-
-          //* imgur
-          const result = await imageUpload(imgBase64);
-          console.log(result);
-          imgurDeleteHash = result.data.deletehash;
-          imgurLink = result.data.link;
-
-          //* 刪掉圖片
-          window.setTimeout(async () => {
-            const res = await imageDelete(imgurDeleteHash);
-            console.log(res);
-          }, 5000);
         };
         reader.readAsDataURL(files[0]);
+      }
+
+      async function submit() {
+        //* 上傳圖片
+        const result = await imageUpload(imgBase64);
+        console.log(result);
+        imgurDeleteHash = result.data.deletehash;
+        imgurLink = result.data.link;
+
+        //* 刪掉圖片
+        window.setTimeout(async () => {
+          const res = await imageDelete(imgurDeleteHash);
+          console.log(res);
+        }, 3000);
+
+        document.querySelector('#imgur').innerHTML = imgurLink + '(3秒後刪除)';
       }
     </script>
   </body>
