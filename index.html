@@ -21,6 +21,8 @@
     <script>
       const clientID = '24e8cb89e8275b5';
       let imgBase64 = '';
+      let imgurLink = '';
+      let imgurDeleteHash = '';
       async function imageUpload(data) {
         const formData = new FormData();
         formData.append('image', data.split(',')[1]);
@@ -34,15 +36,28 @@
         // console.log(result);
 
         //* Fetch (測試可以)
-        const myHeaders = new Headers();
-        myHeaders.append('Authorization', `Client-ID ${clientID}`);
+        const headers = new Headers();
+        headers.append('Authorization', `Client-ID ${clientID}`);
         const requestOptions = {
           method: 'POST',
-          headers: myHeaders,
+          headers,
           body: formData,
           redirect: 'follow',
         };
         const res = await fetch('https://api.imgur.com/3/image', requestOptions);
+        const result = await res.json();
+        return result;
+      }
+
+      async function imageDelete(hash) {
+        const headers = new Headers();
+        headers.append('Authorization', `Client-ID ${clientID}`);
+        const requestOptions = {
+          method: 'DELETE',
+          headers,
+          redirect: 'follow',
+        };
+        const res = await fetch(`https://api.imgur.com/3/image/${hash}`, requestOptions);
         const result = await res.json();
         return result;
       }
@@ -60,12 +75,20 @@
         reader.onload = async e => {
           imgBase64 = e.target.result;
           console.log(imgBase64);
-          document.querySelector('#filename').innerHTML = filename;
+          document.querySelector('#filename').innerHTML = imgFilename;
           document.querySelector('img').src = e.target.result;
 
           //* imgur
           const result = await imageUpload(imgBase64);
           console.log(result);
+          imgurDeleteHash = result.data.deletehash;
+          imgurLink = result.data.link;
+
+          //* 刪掉圖片
+          window.setTimeout(async () => {
+            const res = await imageDelete(imgurDeleteHash);
+            console.log(res);
+          }, 5000);
         };
         reader.readAsDataURL(files[0]);
       }
