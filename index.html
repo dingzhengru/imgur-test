@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>imgur-test</title>
+
+    <style>
+      body {
+        padding: 50px;
+      }
+    </style>
+  </head>
+  <body>
+    <input type="file" onchange="onFileChange(event)" />
+    <div id="filename"></div>
+    <img src="" alt="" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.1/axios.min.js"></script>
+    <script>
+      const clientID = '24e8cb89e8275b5';
+      let imgBase64 = '';
+      async function imageUpload(data) {
+        const formData = new FormData();
+        formData.append('image', data.split(',')[1]);
+
+        //* axios (XHR) 無法通過 cors
+        // const headers = {
+        //   Authorization: `Client-ID ${clientID}`,
+        //   withCredentials: true,
+        // };
+        // const result = await axios.post('https://api.imgur.com/3/image', formData, { headers });
+        // console.log(result);
+
+        //* Fetch (測試可以)
+        const myHeaders = new Headers();
+        myHeaders.append('Authorization', `Client-ID ${clientID}`);
+        const requestOptions = {
+          method: 'POST',
+          headers: myHeaders,
+          body: formData,
+          redirect: 'follow',
+        };
+        const res = await fetch('https://api.imgur.com/3/image', requestOptions);
+        const result = await res.json();
+        return result;
+      }
+
+      async function onFileChange(event) {
+        console.log('onFileChange', event);
+        const files = event.target.files || event.dataTransfer.files;
+        if (!files.length || files.length <= 0) {
+          return;
+        }
+        imgFilename = files[0].name;
+
+        //* 將圖片轉成 base64 url
+        const reader = new FileReader();
+        reader.onload = async e => {
+          imgBase64 = e.target.result;
+          console.log(imgBase64);
+          document.querySelector('#filename').innerHTML = filename;
+          document.querySelector('img').src = e.target.result;
+
+          //* imgur
+          const result = await imageUpload(imgBase64);
+          console.log(result);
+        };
+        reader.readAsDataURL(files[0]);
+      }
+    </script>
+  </body>
+</html>
